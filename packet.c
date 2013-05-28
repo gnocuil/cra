@@ -176,7 +176,10 @@ struct arppkt *createArpResponse(struct arppkt *recvArpPkt)
 
 char *trans6to4(char *ethhead, char *udphead, int udplen, int *frame_len)
 {
-    *(uint16_t*)(udphead + 2) = htons(68);
+	if (*(uint32_t*)(udphead + 32) == 0)
+	    *(uint16_t*)(udphead + 2) = htons(68);
+	else
+		*(uint16_t*)(udphead + 2) = htons(67);
     char *frame = NULL;
     udplen += 40;
     *frame_len = 14 + 20 + udplen;
