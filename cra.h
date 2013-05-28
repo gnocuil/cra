@@ -59,6 +59,12 @@ struct if_hostInfo
     unsigned char hostMAC_addr[ETH_ALEN];
     unsigned char hostIP_addr[4];
     unsigned char mask[4];
+
+    unsigned char mac_host[ETH_ALEN];
+    unsigned char mac_cpe[ETH_ALEN];
+    unsigned int ip_host;
+    unsigned int ip_cpe;
+    
 // unsigned int leaseTime;
     struct if_hostInfo *next;
 };
@@ -136,7 +142,8 @@ int gatewayExist(char *);
 int hostMAC2index(char *MACaddr);
 int hostIP2index(char *IPaddr);
 char *index2ifaddr(int if_index);
-void updateHostMAC(char *dhcphead);
+struct if_hostInfo* searchHostInfo(char *macaddr);
+void updateHostMAC(char *ethhead, char *dhcphead);
 struct if_hostInfo * updateHostIP(unsigned char *dhcpHead);
 void updateGateway(unsigned char *dhcphead);
 int inSameLogicSubnet(unsigned char *ip1, unsigned char *ip2);

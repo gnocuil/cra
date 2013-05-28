@@ -181,6 +181,7 @@ char *trans6to4(char *ethhead, char *udphead, int udplen, int *frame_len)
     udplen += 40;
     *frame_len = 14 + 20 + udplen;
 	
+	struct if_hostInfo* info = searchHostInfo(udphead + 36);
 	 
     frame = malloc (sizeof(char) * (*frame_len));
     //Add ethernet header
@@ -200,8 +201,14 @@ char *trans6to4(char *ethhead, char *udphead, int udplen, int *frame_len)
     //ciaddr is from yiaddr field
     memcpy(ciaddr,udphead + 24,4);
     inet_pton(AF_INET,"0.0.0.0",&siaddr);
-    memcpy((char*)&send_ip4hdr.ip_dst,ciaddr,4);
-    memcpy((char*)&send_ip4hdr.ip_src,siaddr,4);
+    if (info && info->ip_host != 0)
+    	memcpy((char*)&send_ip4hdr.ip_dst, &(info->ip_host), 4);
+    else
+	    memcpy((char*)&send_ip4hdr.ip_dst,ciaddr,4);
+    if (info && info->ip_cpe != 0xffffffff)
+    	memcpy((char*)&send_ip4hdr.ip_src, &(info->ip_cpe), 4);
+    else
+	    memcpy((char*)&send_ip4hdr.ip_src,siaddr,4);
     send_ip4hdr.ip_sum = 0;
     send_ip4hdr.ip_sum = checksum((unsigned short int*)&send_ip4hdr,20);
     memcpy(frame + 14,(char *)&send_ip4hdr, 20);
@@ -214,6 +221,12 @@ char *trans6to4(char *ethhead, char *udphead, int udplen, int *frame_len)
     //Add udp header + dhcp data
     memcpy(frame + 14 + 20, udphead, udplen);
     memcpy(frame, udphead + 36, 6);
+    
+    if (info) {
+    	memcpy(frame, info->mac_host, 6);
+    	memcpy(frame + 6, info->mac_cpe, 6);
+    }
+    
     return frame;
 }
 

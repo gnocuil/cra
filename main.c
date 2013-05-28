@@ -95,7 +95,7 @@ int main(int argc, char **argv)
                     //printf("[4over6 CRA]:received an DHCP4 request package!\n");
                     if(isLinkcra == 1)
                     {
-                        updateHostMAC(udphead+8);
+                        updateHostMAC(ethhead, udphead+8);
                         sendPacket6(ethhead,udphead,udplen);		   
                     }
                     else //hostcra only handle packages send by local interfaces

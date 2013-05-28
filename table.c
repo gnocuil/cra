@@ -107,27 +107,45 @@ char *index2ifname(int if_index)
     return NULL;
 }
 
-void updateHostMAC(char *dhcphead)
+struct if_hostInfo* searchHostInfo(char *macaddr)
+{
+    struct if_hostInfo *hostMAC = NULL;
+    for (hostMAC = hostInfos; hostMAC != NULL; hostMAC = hostMAC->next) {
+        if (memcmp(macaddr, hostMAC->hostMAC_addr, ETH_ALEN) == 0)
+            return hostMAC;
+    }
+    return NULL;
+}
+
+void updateHostMAC(char *ethhead, char *dhcphead)
 {
     char *hostMACaddr = dhcphead+28;
-    struct if_hostInfo *hostMAC;
+    struct if_hostInfo *hostMAC = NULL;
   
     //find whether the item is recorded
     for(hostMAC=hostInfos;hostMAC!=NULL;hostMAC=hostMAC->next)
     {
         if(memcmp(hostMACaddr,hostMAC->hostMAC_addr,ETH_ALEN)==0)
-            return;
+            break;
     }
 	
     //add a new record
-    hostMAC=(struct if_hostInfo*)malloc(sizeof(struct if_hostInfo));
-    hostMAC->next=hostInfos;
+    if (!hostMAC) {
+    	hostMAC=(struct if_hostInfo*)malloc(sizeof(struct if_hostInfo));
+    	hostMAC->next=hostInfos;
+    	hostInfos=hostMAC;
+    }
+    
     hostMAC->if_index=recvDev.sll_ifindex;
     memcpy(hostMAC->hostMAC_addr,hostMACaddr,ETH_ALEN);
     memset(hostMAC->hostIP_addr,0,4);
     memset(hostMAC->mask,0,4);
-	
-    hostInfos=hostMAC;   
+    
+    memcpy(hostMAC->mac_host, ethhead + 6, 6);
+    memcpy(hostMAC->mac_cpe, ethhead, 6);
+    memcpy(&(hostMAC->ip_host), ethhead + 14 + 12, 4);
+    memcpy(&(hostMAC->ip_cpe), ethhead + 14 + 16, 4);
+    
     printf("[4over6 CRA]:Add a hostMAC record!\n");
     printf("%d\t%s\n",hostMAC->if_index,mac_to_str(hostMAC->hostMAC_addr));  
 }
